@@ -180,6 +180,6 @@ rule grade:
         addadapters.sh \
             in={input} \
             grade \
-            > {output}
+            2> {output}
         """
 
