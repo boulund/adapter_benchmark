@@ -114,7 +114,7 @@ rule trimmomatic:
             {output} \
             ILLUMINACLIP:gruseq.fa:2:28:10 \
             MINLEN:10 \
-            > {log}
+            2> {log}
         """
 
 
