@@ -17,6 +17,7 @@ rule all:
     input:
         #expand("processed/{tool}.fq", tool=TOOLS),
         expand("grades/{tool}.grade.txt", tool=TOOLS),
+        "plots/plots.pdf"
         
 
 rule download_fastq:
@@ -183,3 +184,16 @@ rule grade:
             2> {output}
         """
 
+rule plot:
+    input:
+        expand("benchmarks/{tool}.benchmark.txt", tool=TOOLS),
+    output:
+        pdf="plots/plots.pdf",
+        png="plots/plots.png",
+    conda: "env.yaml"
+    shell:
+        """
+        scripts/plot_benchmarks.py \
+            --output {output.pdf} \
+            {input}
+        """
