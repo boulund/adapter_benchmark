@@ -11,11 +11,11 @@ TOOLS=[
     "trimmomatic",
     "bbduk",
     "fastp",
+    "adapterremoval",
 ]
 
 rule all:
     input:
-        #expand("processed/{tool}.fq", tool=TOOLS),
         expand("grades/{tool}.grade.txt", tool=TOOLS),
         expand("plots/{plot}.pdf", plot=["benchmarks", "grades"]),
         
@@ -170,6 +170,28 @@ rule fastp:
             2> {log}
         """
 
+rule adapterremoval:
+    input:
+        fastq=rules.add_adapters.output,
+        adapters="gruseq.txt",
+    output:
+        fq="processed/adapterremoval.fq",
+    conda: "adapterremoval.yaml"
+    log: "logs/adapterremoval.log"
+    threads: 10
+    shadow: "shallow"
+    benchmark:
+        repeat("benchmarks/adapterremoval.benchmark.txt", 3)
+    shell:
+        """
+        AdapterRemoval \
+            --file1 {input.fastq} \
+            --output1 {output.fq} \
+            --adapter-list {input.adapters} \
+            --thread {threads} \
+            2> {log}
+        """
+
 rule grade:
     input:
         "processed/{tool}.fq"
@@ -201,3 +223,4 @@ rule plot:
             --output {output.grades} \
             {input.grades}
         """
+
