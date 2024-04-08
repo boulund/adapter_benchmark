@@ -11,22 +11,25 @@ TOOLS=[
     "trimmomatic",
     "bbduk",
     "fastp",
+    "adapterremoval",
 ]
+FASTQ="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR921/004/SRR9218144/SRR9218144.fastq.gz"
 
 rule all:
     input:
-        #expand("processed/{tool}.fq", tool=TOOLS),
-        expand("grades/{tool}.grade.txt", tool=TOOLS),
-        expand("plots/{plot}.pdf", plot=["benchmarks", "grades"]),
+        expand("output/grades/{tool}.grade.txt", tool=TOOLS),
+        expand("output/plots/{plot}.pdf", plot=["benchmarks", "grades"]),
         
 
 rule download_fastq:
     output:
-        "SRR9218144.fastq.gz"
-    conda: "env.yaml"
+        "output/data.fastq.gz"
+    conda: "envs/main.yaml"
+    params:
+        fastq=FASTQ
     shell:
         """
-        wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR921/004/SRR9218144/SRR9218144.fastq.gz
+        wget --output-document {output} {params.fastq}
         """
 
 rule add_adapters:
@@ -34,9 +37,9 @@ rule add_adapters:
         fastq=rules.download_fastq.output,
         adapters="gruseq.fa",
     output:
-        "dirty.fq"
-    log: "logs/add_adapters.log"
-    conda: "env.yaml"
+        "output/dirty.fq"
+    log: "output/logs/add_adapters.log"
+    conda: "envs/main.yaml"
     shell:
         """
         addadapters.sh \
@@ -54,12 +57,12 @@ rule cutadapt:
         fastq=rules.add_adapters.output,
         adapters="gruseq.fa",
     output:
-        "processed/cutadapt.fq"
-    log: "logs/cutadapt.log"
-    conda: "env.yaml"
+        "output/processed/cutadapt.fq"
+    log: "output/logs/cutadapt.log"
+    conda: "envs/cutadapt.yaml"
     threads: 10
     benchmark:
-        repeat("benchmarks/cutadapt.benchmark.txt", 3)
+        repeat("output/benchmarks/cutadapt.benchmark.txt", 3)
     shell:
         """
         cutadapt \
@@ -99,12 +102,12 @@ rule trimmomatic:
         fastq=rules.add_adapters.output,
         adapters="gruseq.fa",
     output:
-        "processed/trimmomatic.fq"
-    conda: "env.yaml"
-    log: "logs/trimmomatic.log"
+        "output/processed/trimmomatic.fq"
+    conda: "envs/trimmomatic.yaml"
+    log: "output/logs/trimmomatic.log"
     threads: 10
     benchmark:
-        repeat("benchmarks/trimmomatic.benchmark.txt", 3)
+        repeat("output/benchmarks/trimmomatic.benchmark.txt", 3)
     shell:
         """
         trimmomatic \
@@ -124,12 +127,12 @@ rule bbduk:
         fastq=rules.add_adapters.output,
         adapters="gruseq.fa",
     output:
-        "processed/bbduk.fq"
-    conda: "env.yaml"
-    log: "logs/bbduk.log"
+        "output/processed/bbduk.fq"
+    conda: "envs/main.yaml"
+    log: "output/logs/bbduk.log"
     threads: 10
     benchmark:
-        repeat("benchmarks/bbduk.benchmark.txt", 3)
+        repeat("output/benchmarks/bbduk.benchmark.txt", 3)
     shell:
         """
         bbduk.sh \
@@ -149,14 +152,14 @@ rule fastp:
         fastq=rules.add_adapters.output,
         adapters="gruseq.fa",
     output:
-        fq="processed/fastp.fq",
-        html="processed/fastp.html",
-        json="processed/fastp.json",
-    conda: "env.yaml"
-    log: "logs/fastp.log"
+        fq="output/processed/fastp.fq",
+        html="output/processed/fastp.html",
+        json="output/processed/fastp.json",
+    conda: "envs/fastp.yaml"
+    log: "output/logs/fastp.log"
     threads: 10
     benchmark:
-        repeat("benchmarks/fastp.benchmark.txt", 3)
+        repeat("output/benchmarks/fastp.benchmark.txt", 3)
     shell:
         """
         fastp \
@@ -170,12 +173,34 @@ rule fastp:
             2> {log}
         """
 
+rule adapterremoval:
+    input:
+        fastq=rules.add_adapters.output,
+        adapters="gruseq.txt",
+    output:
+        fq="output/processed/adapterremoval.fq",
+    conda: "envs/adapterremoval.yaml"
+    log: "output/logs/adapterremoval.log"
+    threads: 10
+    shadow: "shallow"
+    benchmark:
+        repeat("output/benchmarks/adapterremoval.benchmark.txt", 3)
+    shell:
+        """
+        AdapterRemoval \
+            --file1 {input.fastq} \
+            --output1 {output.fq} \
+            --adapter-list {input.adapters} \
+            --thread {threads} \
+            2> {log}
+        """
+
 rule grade:
     input:
-        "processed/{tool}.fq"
+        "output/processed/{tool}.fq"
     output:
-        "grades/{tool}.grade.txt"
-    conda: "env.yaml"
+        "output/grades/{tool}.grade.txt"
+    conda: "envs/main.yaml"
     shell:
         """
         addadapters.sh \
@@ -186,18 +211,19 @@ rule grade:
 
 rule plot:
     input:
-        benchmarks=expand("benchmarks/{tool}.benchmark.txt", tool=TOOLS),
-        grades=expand("grades/{tool}.grade.txt", tool=TOOLS),
+        benchmarks=expand("output/benchmarks/{tool}.benchmark.txt", tool=TOOLS),
+        grades=expand("output/grades/{tool}.grade.txt", tool=TOOLS),
     output:
-        benchmarks="plots/benchmarks.pdf",
-        grades="plots/grades.pdf",
-    conda: "env.yaml"
+        benchmarks="output/plots/benchmarks.pdf",
+        grades="output/plots/grades.pdf",
+    conda: "envs/main.yaml"
     shell:
         """
-        scripts/plot_benchmarks.py \
+        workflow/scripts/plot_benchmarks.py \
             --output {output.benchmarks} \
             {input.benchmarks}
-        scripts/plot_grades.py \
+        workflow/scripts/plot_grades.py \
             --output {output.grades} \
             {input.grades}
         """
+

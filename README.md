@@ -17,5 +17,15 @@ http://seqanswers.com/forums/attachment.php?attachmentid=2993&d=1398383571
 A single sample is downloaded from SRA. Feel free to replace it with whatever
 you want. 
 
+## Results
+These plots are produced by the workflow, one for benchmarking results
+(Snakemake runs each tool three times to assess runtime, CPU and RAM usage),
+and one plot with adapter removal performance.
+
+![Benchmark results](plots/benchmarks.png)
+
+![Adapter removal performance](plots/grades.png)
+
+
 # Running
 Run the benchmarking workflow with `snakemake --use-conda --jobs 10`
