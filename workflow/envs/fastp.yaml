@@ -1,0 +1,7 @@
+name: fastp
+channels:
+    - conda-forge
+    - bioconda
+    - default
+dependencies:
+    - fastp=0.23.4
