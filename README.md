@@ -4,13 +4,15 @@ http://seqanswers.com/forums/showthread.php?t=42776
 
 The following tools are compared:
 
- - bbduk
- - cutadapt
- - fastp
- - trimmomatic
+ - [AdapterRemoval](https://adapterremoval.readthedocs.io/en/stable/)
+ - [BBduk](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
+ - [Cutadapt](https://cutadapt.readthedocs.io/en/stable/)
+ - [Fastp](https://github.com/OpenGene/fastp)
+ - [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)
 
 ## Fake adapters, "gruseq"
-The fake truseq adapters, "gruseq", provided by Brian Bushnell, downloaded from: 
+The comparison adds fake truseq adapters, "gruseq", provided by Brian Bushnell,
+downloaded from:
 http://seqanswers.com/forums/attachment.php?attachmentid=2993&d=1398383571
 
 ## Test data
@@ -28,4 +30,8 @@ and one plot with adapter removal performance.
 
 
 # Running
-Run the benchmarking workflow with `snakemake --use-conda --jobs 10`
+Run the benchmarking workflow with something like:
+```bash
+snakemake --use-conda --jobs 10
+```
+
