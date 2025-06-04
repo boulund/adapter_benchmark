@@ -14,7 +14,8 @@ jobs:
       - name: conda
         run: |
           echo "$CONDA/bin" >> "$GITHUB_PATH"
-          $CONDA/bin/conda install -y -c conda-forge -c bioconda snakemake-minimal
+          $CONDA/bin/conda create -n snakemake -y -c conda-forge -c bioconda python=3.12 snakemake-minimal
+          $CONDA/bin/conda activate snakemake
       - name: test env
         run: |
           which snakemake
