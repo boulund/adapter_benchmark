@@ -1,34 +1,35 @@
 on: push
-name: benchmark
 
 jobs:
-  run:
+  benchmark:
+    name: Benchmark 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
-      - name: build-env
-        run: |
-          echo "CORES=$(nproc)" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
-      - name: conda
-        run: |
-          echo "$CONDA/bin" >> "$GITHUB_PATH"
-          $CONDA/bin/conda create -n snakemake -y -c conda-forge -c bioconda python=3.12 snakemake-minimal
-      - name: test env
-        run: |
-          $CONDA/bin/activate snakemake
-          which snakemake
-          snakemake --help
-          snakemake --version
-      - name: benchmarks
-        run: |
-          $CONDA/bin/activate snakemake
-          echo "variable CORES: '$CORES'"
-          sed -i 's/threads: 8/threads: 2/' config/config.yaml
-          snakemake --use-conda --scheduler greedy --jobs $CORES
-      - uses: actions/upload-artifact@v4
-        with:
-          name: benchmarks
-          path: |
-            output/**
+        - uses: actions/checkout@v4
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            python-version: 3.12
+            environment-file: .github/workflows/environment.yaml
+        - name: test env
+          run: |
+            conda info
+            conda list
+            which snakemake
+            snakemake --help
+            snakemake --version
+        - name: benchmarks
+          run: |
+            sed -i 's/threads: 8/threads: 2/' config/config.yaml
+            snakemake --use-conda --scheduler greedy --jobs 2
+        - uses: actions/upload-artifact@v4
+          with:
+            name: benchmarks
+            path: |
+              output/plots/*
+              output/grades/*
+

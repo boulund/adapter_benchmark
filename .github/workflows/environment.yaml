@@ -1,0 +1,6 @@
+name: smk
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - snakemake-minimal
