@@ -25,6 +25,7 @@ jobs:
         - name: benchmarks
           run: |
             sed -i 's/threads: 8/threads: 2/' config/config.yaml
+            sed -i 's/replicates: 3/replicates: 1/' config/config.yaml
             snakemake --use-conda --scheduler greedy --jobs 2
         - uses: actions/upload-artifact@v4
           with:
