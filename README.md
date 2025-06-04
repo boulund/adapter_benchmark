@@ -17,8 +17,10 @@ downloaded from:
 http://seqanswers.com/forums/attachment.php?attachmentid=2993&d=1398383571
 
 ## Test data
-A single sample is downloaded from SRA. Feel free to replace it with whatever
-you want. 
+A subset of a single sample is from SRA is provided in the repo.
+Comment/uncomment the `download_FASTQ` setting in the `config/config.yaml` to
+download the complete sample from SRA instead. Feel free to replace the URL
+with whatever FASTQ file you want.
 
 ## Results
 These plots are produced by the workflow, one for benchmarking results
@@ -33,5 +35,6 @@ and one plot with adapter removal performance.
 # Running
 Run the benchmarking workflow with something like:
 ```bash
-snakemake --use-conda --jobs 10
+snakemake --use-conda --cores 8
 ```
+
