@@ -1,0 +1,6 @@
+# Config file for Snakemake workflow adapter_benchmark
+
+download_FASTQ: False
+#download_FASTQ: "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR921/004/SRR9218144/SRR9218144.fastq.gz"
+replicates: 3
+threads: 8
