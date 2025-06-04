@@ -15,15 +15,17 @@ jobs:
         run: |
           echo "$CONDA/bin" >> "$GITHUB_PATH"
           $CONDA/bin/conda create -n snakemake -y -c conda-forge -c bioconda python=3.12 snakemake-minimal
-          $CONDA/bin/activate snakemake
       - name: test env
         run: |
+          $CONDA/bin/activate snakemake
           which snakemake
           snakemake --help
           snakemake --version
       - name: benchmarks
         run: |
+          $CONDA/bin/activate snakemake
           echo "variable CORES: '$CORES'"
+          sed -i 's/threads: 8/threads: 2/' config/config.yaml
           snakemake --use-conda --scheduler greedy --jobs $CORES
       - uses: actions/upload-artifact@v4
         with:
