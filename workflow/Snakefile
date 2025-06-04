@@ -28,11 +28,12 @@ rule all:
 
 
 ## Download data if requested by config, else use provided example testing data.
-data_path = "output/data.fastq.gz"
+example_data_path = "../data/SRR9218144.888888.fastq.gz"
+input_data_path = "output/data.fastq.gz"
 if config["download_FASTQ"]:
     rule download_fastq:
         output:
-            data_path
+            input_data_path
         conda: "envs/main.yaml"
         params:
             fastq=config["download_FASTQ"]
@@ -41,12 +42,12 @@ if config["download_FASTQ"]:
             wget --output-document {output} {params.fastq}
             """
 else:
-    if os.path.isfile(data_path):
-        print("INFO: download_FASTQ is set to False and '{data_path}' already exists, doing nothing.")
+    if os.path.isfile(input_data_path):
+        print(f"DEBUG: download_FASTQ is set to False and '{input_data_path}' already exists, doing nothing.")
     else:
-        print("INFO: Symlinking example FASTQ 'data/SRR9218144.888888.fastq.gz' to 'output/data.fastq.gz'.")
+        print(f"INFO: Symlinking example FASTQ {example_data_path} to {input_data_path}.")
         os.makedirs("output", exist_ok=True)
-        os.symlink("../data/SRR9218144.888888.fastq.gz", "output/data.fastq.gz")
+        os.symlink(example_data_path, input_data_path)
 
 
 rule add_adapters:
