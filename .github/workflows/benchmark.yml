@@ -14,7 +14,7 @@ jobs:
         - uses: conda-incubator/setup-miniconda@v3
           with:
             python-version: 3.12
-            environment-file: .github/workflows/environment.yaml
+            environment-file: workflow/envs/github.yaml
         - name: test env
           run: |
             conda info
@@ -26,7 +26,7 @@ jobs:
           run: |
             sed -i 's/threads: 8/threads: 2/' config/config.yaml
             sed -i 's/replicates: 3/replicates: 1/' config/config.yaml
-            snakemake --use-conda --scheduler greedy --jobs 2
+            snakemake --use-conda --scheduler greedy --cores 2
         - uses: actions/upload-artifact@v4
           with:
             name: benchmarks
