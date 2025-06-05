@@ -3,4 +3,4 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-    - adapterremoval=2.3.3
+    - adapterremoval=2.3.4
