@@ -1,6 +1,6 @@
-name: trimmomatic
+name: fasten
 channels:
     - conda-forge
     - bioconda
 dependencies:
-    - trimmomatic=0.39
+    - fasten=0.8.7

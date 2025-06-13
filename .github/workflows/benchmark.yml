@@ -1,0 +1,36 @@
+on: push
+
+jobs:
+  benchmark:
+    name: Benchmark 
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+        - uses: actions/checkout@v4
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            python-version: 3.12
+            environment-file: workflow/envs/github.yaml
+        - name: test env
+          run: |
+            conda info
+            conda list
+            which snakemake
+            snakemake --help
+            snakemake --version
+        - name: benchmarks
+          run: |
+            sed -i 's/threads: 8/threads: 2/' config/config.yaml
+            sed -i 's/replicates: 3/replicates: 1/' config/config.yaml
+            snakemake --use-conda --scheduler greedy --cores 2
+        - uses: actions/upload-artifact@v4
+          with:
+            name: benchmarks
+            path: |
+              output/plots/*
+              output/grades/*
+

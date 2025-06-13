@@ -6,35 +6,53 @@
 #   http://seqanswers.com/forums/attachment.php?attachmentid=2993&d=1398383571
 # Fredrik Boulund 2019
 
+import random
+import gzip
+import os
+
+configfile: "config/config.yaml"
+
 TOOLS=[
     "cutadapt",
     "trimmomatic",
     "bbduk",
     "fastp",
     "adapterremoval",
+    "fasten",
 ]
-FASTQ="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR921/004/SRR9218144/SRR9218144.fastq.gz"
 
 rule all:
     input:
         expand("output/grades/{tool}.grade.txt", tool=TOOLS),
         expand("output/plots/{plot}.pdf", plot=["benchmarks", "grades"]),
-        
 
-rule download_fastq:
-    output:
-        "output/data.fastq.gz"
-    conda: "envs/main.yaml"
-    params:
-        fastq=FASTQ
-    shell:
-        """
-        wget --output-document {output} {params.fastq}
-        """
+
+## Download data if requested by config, else use provided example testing data.
+example_data_path = "../data/SRR9218144.888888.fastq.gz"
+input_data_path = "output/data.fastq.gz"
+if config["download_FASTQ"]:
+    rule download_fastq:
+        output:
+            input_data_path
+        conda: "envs/main.yaml"
+        params:
+            fastq=config["download_FASTQ"]
+        shell:
+            """
+            wget --output-document {output} {params.fastq}
+            """
+else:
+    if os.path.isfile(input_data_path):
+        print(f"DEBUG: download_FASTQ is set to False and '{input_data_path}' already exists, doing nothing.")
+    else:
+        print(f"INFO: Symlinking example FASTQ {example_data_path} to {input_data_path}.")
+        os.makedirs("output", exist_ok=True)
+        os.symlink(example_data_path, input_data_path)
+
 
 rule add_adapters:
     input:
-        fastq=rules.download_fastq.output,
+        fastq="output/data.fastq.gz",
         adapters="gruseq.fa",
     output:
         "output/dirty.fq"
@@ -60,9 +78,9 @@ rule cutadapt:
         "output/processed/cutadapt.fq"
     log: "output/logs/cutadapt.log"
     conda: "envs/cutadapt.yaml"
-    threads: 10
+    threads: config["threads"]
     benchmark:
-        repeat("output/benchmarks/cutadapt.benchmark.txt", 3)
+        repeat("output/benchmarks/cutadapt.benchmark.txt", config["replicates"])
     shell:
         """
         cutadapt \
@@ -105,9 +123,9 @@ rule trimmomatic:
         "output/processed/trimmomatic.fq"
     conda: "envs/trimmomatic.yaml"
     log: "output/logs/trimmomatic.log"
-    threads: 10
+    threads: config["threads"]
     benchmark:
-        repeat("output/benchmarks/trimmomatic.benchmark.txt", 3)
+        repeat("output/benchmarks/trimmomatic.benchmark.txt", config["replicates"])
     shell:
         """
         trimmomatic \
@@ -130,9 +148,9 @@ rule bbduk:
         "output/processed/bbduk.fq"
     conda: "envs/main.yaml"
     log: "output/logs/bbduk.log"
-    threads: 10
+    threads: config["threads"]
     benchmark:
-        repeat("output/benchmarks/bbduk.benchmark.txt", 3)
+        repeat("output/benchmarks/bbduk.benchmark.txt", config["replicates"])
     shell:
         """
         bbduk.sh \
@@ -157,9 +175,9 @@ rule fastp:
         json="output/processed/fastp.json",
     conda: "envs/fastp.yaml"
     log: "output/logs/fastp.log"
-    threads: 10
+    threads: config["threads"]
     benchmark:
-        repeat("output/benchmarks/fastp.benchmark.txt", 3)
+        repeat("output/benchmarks/fastp.benchmark.txt", config["replicates"])
     shell:
         """
         fastp \
@@ -181,10 +199,10 @@ rule adapterremoval:
         fq="output/processed/adapterremoval.fq",
     conda: "envs/adapterremoval.yaml"
     log: "output/logs/adapterremoval.log"
-    threads: 10
+    threads: config["threads"]
     shadow: "shallow"
     benchmark:
-        repeat("output/benchmarks/adapterremoval.benchmark.txt", 3)
+        repeat("output/benchmarks/adapterremoval.benchmark.txt", config["replicates"])
     shell:
         """
         AdapterRemoval \
@@ -193,6 +211,27 @@ rule adapterremoval:
             --adapter-list {input.adapters} \
             --thread {threads} \
             2> {log}
+        """
+
+rule fasten:
+    input:
+        fastq=rules.add_adapters.output,
+        adapters="gruseq.fa",
+    output:
+        "output/processed/fasten.fq"
+    conda: "envs/fasten.yaml"
+    log: "output/logs/fasten.log"
+    threads: config["threads"]
+    benchmark:
+        repeat("output/benchmarks/fasten.benchmark.txt", config["replicates"])
+    shell:
+        """
+        fasten_trim \
+          --adapterseqs {input.adapters} \
+          --numcpus {threads} \
+          < {input.fastq} \
+          > {output} \
+          2> {log};
         """
 
 rule grade:
@@ -226,4 +265,5 @@ rule plot:
             --output {output.grades} \
             {input.grades}
         """
+
 

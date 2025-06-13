@@ -1,6 +1,6 @@
-name: trimmomatic
+name: smk
 channels:
     - conda-forge
     - bioconda
 dependencies:
-    - trimmomatic=0.39
+    - snakemake-minimal
